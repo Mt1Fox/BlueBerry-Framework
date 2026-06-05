@@ -60,12 +60,12 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 		
 		if Success then
 			if Category then
-				local CatTable = BlueBerry.LoadedModules[Category]
-				if not CatTable then
-					CatTable = {} :: Registy
-					BlueBerry.LoadedModules[Category] = CatTable
+				local CategoryTable = BlueBerry.LoadedModules[Category]
+				if not CategoryTable then
+					CategoryTable = {} :: Registy
+					BlueBerry.LoadedModules[Category] = CategoryTable
 				end
-				CatTable[Module.Name] = Result
+				CategoryTable[Module.Name] = Result
 			else
 				BlueBerry.LoadedModules[Module.Name] = Result
 			end
