@@ -1,37 +1,20 @@
---w-- // [BlueBerry] A lightweight framework for Roblox - Created for my games used inside Vulpes Studios.
+--w-- // [BlueBerry] A lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios.
 --w-- // Created by: @Mt1Fox | Vulpes Studios
---w-- // Version: 1.1
+--w-- // Version: 1.2
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
 
 -----------------------------------------------------------------www
 
---w-- // How to access intellisense and load it?
---w-- // 1. Run LoadModules with the parent instance of the modules you want to load, and optionally a category and debug flag in server script or local
---w-- // 2. In different module/script, you just require the BlueBerry module and add ::typeof(require(Module)) so it will return the correct type and intellisense will work
---w-- // 2.1 You can also use shared.BlueBerry to access the framework, but require is recommended
+--w-- // How to use
+--w-- // 1. Run BlueBerry:Init() before loading modules. This creates the table and sets shared.BlueBerry
+--w-- // 2. Run BlueBerry:LoadModules(Parent, Category, Debug) to load, cache, and run :Init() and :Start() on all modules
+--w-- // 2.1 Optionally you can run just BlueBerry:LoadModule(Module, Category, Debug) to load a single module instead of an entire folder
 
---w-- // Definitions
-export type ModuleReturn = {
-	Init: ((self: ModuleReturn) -> ())?,
-	Start: ((self: ModuleReturn) -> ())?,
-	[string]: any
-}
-
-export type Registy = {
-	[string]: ModuleReturn | Registy
-}
-
-type BlueBerry_t = {
-	LoadedModules: Registy,
-	Init: (self: BlueBerry_t) -> BlueBerry_t,
-	LoadModules: (self: BlueBerry_t, Parent: Instance, Category: string?, Debug: boolean?) -> Registy
-}
-
---w-- // Initialize with the correct type definition
+--w-- // Framework initialization
 local BlueBerry = {
-	LoadedModules = {}
+    LoadedModules = {}
 }
 
 --w-- // Run this before loading modules
@@ -42,7 +25,7 @@ function BlueBerry:Init()
 	return self
 end
 
-function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : boolean?) : Registy
+function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : boolean?)
 	if not Parent or not Parent:IsA("Instance") then
 		warn("[BlueBerry]: Parent - " .. tostring(Parent) .. " provided is not a valid Instance.")
 		return self.LoadedModules
@@ -62,7 +45,7 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 			if Category then
 				local CategoryTable = BlueBerry.LoadedModules[Category]
 				if not CategoryTable then
-					CategoryTable = {} :: Registy
+					CategoryTable = {}
 					BlueBerry.LoadedModules[Category] = CategoryTable
 				end
 				CategoryTable[Module.Name] = Result
@@ -138,9 +121,36 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 	return self.LoadedModules
 end
 
-function BlueBerry:Get(Category : string?, ModuleName : string) : any
-	local Registry = if Category then self.LoadedModules[Category] else self.LoadedModules
-	return Registry and Registry[ModuleName] or nil
+function BlueBerry:LoadModule(Module : ModuleScript, Category : string?, Debug : boolean?)
+	if not Module or not Module:IsA("ModuleScript") then
+		warn("[BlueBerry]: Module - " .. tostring(Module) .. " provided is not a valid ModuleScript.")
+		return nil
+	end
+
+	local StartTime = os.clock()
+	local Success, Result = pcall(require, Module)
+	local LoadTime = os.clock() - StartTime
+	
+	if Success then
+		if Category then
+			local CategoryTable = BlueBerry.LoadedModules[Category]
+			if not CategoryTable then
+				CategoryTable = {}
+				BlueBerry.LoadedModules[Category] = CategoryTable
+			end
+			CategoryTable[Module.Name] = Result
+		else
+			BlueBerry.LoadedModules[Module.Name] = Result
+		end
+		if Debug then
+			print("[BlueBerry]: Loaded module: " .. Module.Name .. " in: " .. string.format("%.4f", LoadTime) .. "s ✅")
+		end
+
+		return Result
+	else
+		warn("[BlueBerry]: Failed to load module: " .. Module.Name .. " Error: " .. tostring(Result) .. " ❌")
+		return nil
+	end
 end
 
 return BlueBerry
