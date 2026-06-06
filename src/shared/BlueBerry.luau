@@ -1,6 +1,6 @@
 --w-- // [BlueBerry] A lightweight framework for Roblox - Created for my games used inside Vulpes Studios.
 --w-- // Created by: @Mt1Fox | Vulpes Studios
---w-- // Version: 1.0
+--w-- // Version: 1.1
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
@@ -136,6 +136,11 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 	print("[BlueBerry]: Loaded " .. LoadedCount .. " modules from " .. Parent.Name .. " in: " .. Context .. " ✅")
 
 	return self.LoadedModules
+end
+
+function BlueBerry:Get(Category : string?, ModuleName : string) : any
+	local Registry = if Category then self.LoadedModules[Category] else self.LoadedModules
+	return Registry and Registry[ModuleName] or nil
 end
 
 return BlueBerry
