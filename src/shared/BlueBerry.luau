@@ -1,6 +1,6 @@
 --w-- // [BlueBerry] A lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios.
 --w-- // Created by: @Mt1Fox | Vulpes Studios
---w-- // Version: 1.2
+--w-- // Version: 1.3
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
@@ -14,7 +14,7 @@ local Context = RunService:IsServer() and "Server" or "Client"
 
 --w-- // Framework initialization
 local BlueBerry = {
-    LoadedModules = {}
+	LoadedModules = {}
 }
 
 --w-- // Run this before loading modules
@@ -32,25 +32,27 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 	end
 
 	local LoadedCount = 0
+	local StartedModules = {}
 
 	--w-- // Main loading loop, loops through all children of the provided Parent instance,
 	--w-- // checks if they are ModuleScripts, and attempts to require them. It also tracks loading time for each module and prints debug information if enabled
 	for _, Module in ipairs(Parent:GetChildren()) do
 		if not Module:IsA("ModuleScript") then continue end
+		if Module.Name == "BlueBerry" then continue end --w-- // Prevent loading itself if placed inside the same folder
 		local StartTime = os.clock()
 		local Success, Result = pcall(require, Module)
 		local LoadTime = os.clock() - StartTime
 		
 		if Success then
 			if Category then
-				local CategoryTable = BlueBerry.LoadedModules[Category]
+				local CategoryTable = StartedModules[Category]
 				if not CategoryTable then
 					CategoryTable = {}
-					BlueBerry.LoadedModules[Category] = CategoryTable
+					StartedModules[Category] = CategoryTable
 				end
 				CategoryTable[Module.Name] = Result
 			else
-				BlueBerry.LoadedModules[Module.Name] = Result
+				StartedModules[Module.Name] = Result
 			end
 			LoadedCount += 1
 			if Debug then
@@ -63,7 +65,7 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 
 	--w-- // Second step, initializes and starts modules if they have Init and Start functions respectively.
 	--w-- // It uses pcall to catch any errors during initialization or starting of modules and prints debug information if enabled.
-	for Name, Item in pairs(BlueBerry.LoadedModules) do
+	for Name, Item in pairs(StartedModules) do
 		local IsCategory = type(Item) == "table" and not Item.Init and not Item.Start
 		
 		if IsCategory then
@@ -89,7 +91,7 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 		end
 	end
 
-	for Name, Item in pairs(BlueBerry.LoadedModules) do
+	for Name, Item in pairs(StartedModules) do
 		local IsCategory = type(Item) == "table" and not Item.Init and not Item.Start
 		
 		if IsCategory then
@@ -115,10 +117,15 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 		end
 	end
 
+	--w-- // Merging started modules with loaded modules
+	for Key, Value in pairs(StartedModules) do
+		BlueBerry.LoadedModules[Key] = Value
+	end
+	
 	--w-- // Loading complete, print summary
 	print("[BlueBerry]: Loaded " .. LoadedCount .. " modules from " .. Parent.Name .. " in: " .. Context .. " ✅")
 
-	return self.LoadedModules
+	return StartedModules
 end
 
 function BlueBerry:LoadModule(Module : ModuleScript, Category : string?, Debug : boolean?)
