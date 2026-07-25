@@ -1,10 +1,9 @@
 --w-- // [BlueBerry] A lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios.
 --w-- // Created by: @Mt1Fox | Vulpes Studios
---w-- // Version: 1.3
+--w-- // Version: 1.4
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
-
 -----------------------------------------------------------------www
 
 --w-- // How to use
@@ -37,10 +36,11 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 	--w-- // Main loading loop, loops through all children of the provided Parent instance,
 	--w-- // checks if they are ModuleScripts, and attempts to require them. It also tracks loading time for each module and prints debug information if enabled
 	for _, Module in ipairs(Parent:GetChildren()) do
-		if not Module:IsA("ModuleScript") then continue end
+		if not Module:IsA("ModuleScript") and not Module:IsA("ObjectValue") then continue end
 		if Module.Name == "BlueBerry" then continue end --w-- // Prevent loading itself if placed inside the same folder
+
 		local StartTime = os.clock()
-		local Success, Result = pcall(require, Module)
+		local Success, Result = pcall(require, Module:IsA("ObjectValue") and Module.Value or Module)
 		local LoadTime = os.clock() - StartTime
 		
 		if Success then
@@ -56,10 +56,10 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 			end
 			LoadedCount += 1
 			if Debug then
-				print("[BlueBerry]: Loaded module: " .. Module.Name .. " in: " .. string.format("%.4f", LoadTime) .. "s ✅")
+				print("[BlueBerry]: Loaded module: " ..Parent.Name.."/"..Module.Name .. " in: " .. string.format("%.4f", LoadTime) .. "s ✅")
 			end
 		else
-			warn("[BlueBerry]: Failed to load module: " .. Module.Name .. " Error: " .. tostring(Result) .. " ❌")
+			warn("[BlueBerry]: Failed to load module: " ..Parent.Name.."/".. Module.Name .. " Error: " .. tostring(Result) .. " ❌")
 		end
 	end
 
