@@ -1,14 +1,15 @@
 --w-- // [BlueBerry] A lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios.
 --w-- // Created by: @Mt1Fox | Vulpes Studios
---w-- // Version: 1.4
+--w-- // Version: 1.5
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
 -----------------------------------------------------------------www
 
 --w-- // How to use
---w-- // 1. Run BlueBerry:Init() before loading modules. This creates the table and sets shared.BlueBerry
---w-- // 2. Run BlueBerry:LoadModules(Parent, Category, Debug) to load, cache, and run :Init() and :Start() on all modules
+--w-- // 1.  Run BlueBerry:Init() before loading modules. This creates the table and sets shared.BlueBerry
+--w-- // 2.  Run BlueBerry:LoadModules(Parent, Category, Debug) to load, cache, 
+--w-- //     and run :Init() (or :init, :_init) and :Start() (or :start, :_start, :start) on all modules
 --w-- // 2.1 Optionally you can run just BlueBerry:LoadModule(Module, Category, Debug) to load a single module instead of an entire folder
 
 --w-- // Framework initialization
@@ -70,8 +71,8 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 		
 		if IsCategory then
 			for ModuleName, Module in pairs(Item) do
-				if type(Module) == "table" and type(Module.Init) == "function" then
-					local Success, Result = pcall(Module.Init, Module)
+				if type(Module) == "table" and (type(Module.Init) == "function" or type(Module._init) == "function" or type(Module.init) == "function") then
+					local Success, Result = pcall(Module.Init and Module.Init or Module._init or Module.init, Module)
 					if not Success then
 						warn("[BlueBerry]: Failed to initialize module: " .. ModuleName .. " Error: " .. tostring(Result) .. " ❌")
 					elseif Debug then
@@ -96,8 +97,8 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 		
 		if IsCategory then
 			for ModuleName, Module in pairs(Item) do
-				if type(Module) == "table" and type(Module.Start) == "function" then
-					local Success, Result = pcall(Module.Start, Module)
+				if type(Module) == "table" and (type(Module.Start) == "function" or type(Module._start) == "function" or type(Module.start) == "function") then
+					local Success, Result = pcall(Module.Start and Module.Start or Module._start or Module.start, Module)
 					if not Success then
 						warn("[BlueBerry]: Failed to start module: " .. ModuleName .. " Error: " .. tostring(Result) .. " ❌")
 					elseif Debug then
