@@ -1,25 +1,24 @@
---w-- // [BlueBerry] A lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios.
---w-- // Created by: @Mt1Fox | Vulpes Studios
---w-- // Version: 1.6
+
+const _Description = "[BlueBerry] - Is a lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios."
+const _Created     = "by: @Mt1Fox | Vulpes Studios"
+const _Version     = 1.7
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
------------------------------------------------------------------www
+--------------------------------------------------------------------www
 
 --w-- // How to use
 --w-- // 1.  Run BlueBerry:Init() before loading modules. This creates the table and sets shared.BlueBerry
 --w-- // 2.  Run BlueBerry:LoadModules(Parent, Category, Debug) to load, cache, 
---w-- //     and run :Init() (or :init, :_init, :initialize) and :Start() (or :start, :_start, :start) on all modules
---w-- // 2.1 Optionally you can run just BlueBerry:LoadModule(Module, Category, Debug) to load a single module instead of an entire folder
+--w-- //     and run :Init() (or :init, :_init, :initialize) with :Start() (or :start, :_start) on all modules
+--w-- // 2.1 Optionally you can run BlueBerry:LoadModule(Module, Category, Debug) to load a single module instead of an entire folder
 
 --w-- // Framework initialization
-local BlueBerry = {
-	LoadedModules = {}
-}
+local BlueBerry = {}
 
 --w-- // Run this before loading modules
 function BlueBerry:Init()
-	print("[BlueBerry]: Initializing framework... ✅")
+	print(("[BlueBerry]: Initializing framework version %s... ✅"):format(tostring(_Version)))
 	BlueBerry.LoadedModules = {}
 	shared.BlueBerry = self
 	return self
@@ -31,6 +30,11 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 		return self.LoadedModules
 	end
 
+	if not BlueBerry.LoadedModules then
+		warn("[BlueBerry]: BlueBerry framework is not initialized. Please run BlueBerry:Init() before loading modules.")
+		return nil
+	end
+
 	local LoadedCount = 0
 	local StartedModules = {}
 
@@ -39,6 +43,11 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 	for _, Module in ipairs(Parent:GetChildren()) do
 		if not Module:IsA("ModuleScript") and not Module:IsA("ObjectValue") then continue end
 		if Module.Name == "BlueBerry" then continue end --w-- // Prevent loading itself if placed inside the same folder
+
+		if BlueBerry.LoadedModules[Module.Name] then
+			warn("[BlueBerry]: Module - " .. Module.Name .. " is already loaded. Skipping.")
+			continue
+		end
 
 		local StartTime = os.clock()
 		local Success, Result = pcall(require, Module:IsA("ObjectValue") and Module.Value or Module)
@@ -139,6 +148,16 @@ function BlueBerry:LoadModule(Module : ModuleScript, Category : string?, Debug :
 	if not Module or not Module:IsA("ModuleScript") then
 		warn("[BlueBerry]: Module - " .. tostring(Module) .. " provided is not a valid ModuleScript.")
 		return nil
+	end
+
+	if not BlueBerry.LoadedModules then
+		warn("[BlueBerry]: BlueBerry framework is not initialized. Please run BlueBerry:Init() before loading modules.")
+		return nil
+	end
+
+	if BlueBerry.LoadedModules[Module.Name] then
+		warn("[BlueBerry]: Module - " .. Module.Name .. " is already loaded. Skipping.")
+		return BlueBerry.LoadedModules[Module.Name]
 	end
 
 	local StartTime = os.clock()
