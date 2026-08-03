@@ -1,8 +1,8 @@
 [package]
-name = "mt1fox/blueberry-framework"
+name = "mt1fox/blueberry"
 description = "A lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios."
 license = "MIT"
-version = "1.7.5"
+version = "1.7.6"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 exclude = ["README.md"]
