@@ -1,6 +1,6 @@
 --w-- // [BlueBerry] A lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios.
 --w-- // Created by: @Mt1Fox | Vulpes Studios
---w-- // Version: 1.5
+--w-- // Version: 1.6
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
@@ -9,7 +9,7 @@ local Context = RunService:IsServer() and "Server" or "Client"
 --w-- // How to use
 --w-- // 1.  Run BlueBerry:Init() before loading modules. This creates the table and sets shared.BlueBerry
 --w-- // 2.  Run BlueBerry:LoadModules(Parent, Category, Debug) to load, cache, 
---w-- //     and run :Init() (or :init, :_init) and :Start() (or :start, :_start, :start) on all modules
+--w-- //     and run :Init() (or :init, :_init, :initialize) and :Start() (or :start, :_start, :start) on all modules
 --w-- // 2.1 Optionally you can run just BlueBerry:LoadModule(Module, Category, Debug) to load a single module instead of an entire folder
 
 --w-- // Framework initialization
@@ -67,12 +67,14 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 	--w-- // Second step, initializes and starts modules if they have Init and Start functions respectively.
 	--w-- // It uses pcall to catch any errors during initialization or starting of modules and prints debug information if enabled.
 	for Name, Item in pairs(StartedModules) do
-		local IsCategory = type(Item) == "table" and not Item.Init and not Item.Start
+		local IsCategory = type(Item) == "table" and not Item.Init and not Item._init and not Item.init and not Item.initialize 
+				and not Item.Start and not Item._start and not Item.start
 		
 		if IsCategory then
 			for ModuleName, Module in pairs(Item) do
-				if type(Module) == "table" and (type(Module.Init) == "function" or type(Module._init) == "function" or type(Module.init) == "function") then
-					local Success, Result = pcall(Module.Init and Module.Init or Module._init or Module.init, Module)
+				if type(Module) == "table" and (type(Module.Init) == "function" or type(Module.initialize) == "function" or type(Module._init) == "function" or type(Module.init) == "function") then
+					local Require = Module.Init and Module.Init or Module._init and Module._init or Module.init and Module.init or Module.initialize and Module.initialize
+					local Success, Result = pcall(Require, Module)
 					if not Success then
 						warn("[BlueBerry]: Failed to initialize module: " .. ModuleName .. " Error: " .. tostring(Result) .. " ❌")
 					elseif Debug then
@@ -81,8 +83,9 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 				end
 			end
 		else
-			if type(Item) == "table" and type(Item.Init) == "function" then
-				local Success, Result = pcall(Item.Init, Item)
+			if type(Item) == "table" and (type(Item.Init) == "function" or type(Item.initialize) == "function" or type(Item._init) == "function" or type(Item.init) == "function") then
+				local Require = Item.Init and Item.Init or Item._init and Item._init or Item.init and Item.init or Item.initialize and Item.initialize
+				local Success, Result = pcall(Require, Item)
 				if not Success then
 					warn("[BlueBerry]: Failed to initialize module: " .. Name .. " Error: " .. tostring(Result) .. " ❌")
 				elseif Debug then
@@ -93,12 +96,14 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 	end
 
 	for Name, Item in pairs(StartedModules) do
-		local IsCategory = type(Item) == "table" and not Item.Init and not Item.Start
+		local IsCategory = type(Item) == "table" and not Item.Init and not Item._init and not Item.init and not Item.initialize 
+				and not Item.Start and not Item._start and not Item.start
 		
 		if IsCategory then
 			for ModuleName, Module in pairs(Item) do
 				if type(Module) == "table" and (type(Module.Start) == "function" or type(Module._start) == "function" or type(Module.start) == "function") then
-					local Success, Result = pcall(Module.Start and Module.Start or Module._start or Module.start, Module)
+					local Require = Module.Start and Module.Start or Module._start and Module._start or Module.start and Module.start
+					local Success, Result = pcall(Require, Module)
 					if not Success then
 						warn("[BlueBerry]: Failed to start module: " .. ModuleName .. " Error: " .. tostring(Result) .. " ❌")
 					elseif Debug then
@@ -107,8 +112,9 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 				end
 			end
 		else
-			if type(Item) == "table" and type(Item.Start) == "function" then
-				local Success, Result = pcall(Item.Start, Item)
+			if type(Item) == "table" and (type(Item.Start) == "function" or type(Item._start) == "function" or type(Item.start) == "function") then
+				local Require = Item.Start and Item.Start or Item._start and Item._start or Item.start and Item.start
+				local Success, Result = pcall(Require, Item)
 				if not Success then
 					warn("[BlueBerry]: Failed to start module: " .. Name .. " Error: " .. tostring(Result) .. " ❌")
 				elseif Debug then
