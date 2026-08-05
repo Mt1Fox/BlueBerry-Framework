@@ -1,7 +1,7 @@
 
 const _Description = "[BlueBerry] - Is a lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios."
 const _Created     = "by: @Mt1Fox | Vulpes Studios"
-const _Version     = "1.8.0"
+const _Version     = "1.8.1"
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
@@ -54,7 +54,7 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 		local LoadTime = os.clock() - StartTime
 
 		if Success then
-			local LoadingPriority = Result.LoadingPriority or 1
+			local LoadingPriority = Result and typeof(Result) == "table" or 1
 			StartedModules[LoadingPriority] = StartedModules[LoadingPriority] or {}
 
 			--w-- // Adds the module to the table based on its loading priority

@@ -2,7 +2,7 @@
 
 [BlueBerry] Is a lightweight module loader framework for Roblox - Created for my games used inside Vulpes Studios. <br/>
 Created by: @Mt1Fox | Vulpes Studios <br/>
-Version: 1.8.0
+Version: 1.8.1
 
 # Get on Wally
 https://wally.run/package/mt1fox/blueberry
