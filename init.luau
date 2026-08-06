@@ -1,7 +1,12 @@
 
 const _Description = "[BlueBerry] - Is a lightweight framework module loader for Roblox - Created for my games used inside Vulpes Studios."
 const _Created     = "by: @Mt1Fox | Vulpes Studios"
-const _Version     = "1.8.1"
+const _Version     = "1.9.0"
+
+
+--w-- // Config Value
+const _DefaultLoadingPriority = 2
+
 
 local RunService = game:GetService("RunService")
 local Context = RunService:IsServer() and "Server" or "Client"
@@ -24,8 +29,8 @@ function BlueBerry:Init()
 	return self
 end
 
-function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : boolean?)
-	if not Parent or not Parent:IsA("Instance") then
+function BlueBerry:LoadModules(Parent : Instance | {any}, Category : string?, Debug : boolean?)
+	if not Parent or typeof(Parent) ~= "Instance" and typeof(Parent) ~= "table" then
 		warn("[BlueBerry]: Parent - " .. tostring(Parent) .. " provided is not a valid Instance.")
 		return self.LoadedModules
 	end
@@ -37,10 +42,42 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 
 	local LoadedCount = 0
 	local StartedModules = {}
+	local Modules = typeof(Parent) == "table" and Parent or typeof(Parent) == "Instance" and Parent:GetChildren()
+	local ParentName = typeof(Parent) == "Instance" and Parent.Name or "table"
+
+	local function LoadModulePriority(Module)
+		if not Module:IsA("ModuleScript") and not Module:IsA("ObjectValue") then return end
+
+		local StartTime = os.clock()
+		local Success, Result = pcall(require, Module:IsA("ObjectValue") and Module.Value or Module)
+		local LoadTime = os.clock() - StartTime
+		
+		if Success then
+			local LoadingPriority = Result and typeof(Result) == "table" or _DefaultLoadingPriority
+			StartedModules[LoadingPriority] = StartedModules[LoadingPriority] or {}
+		
+			--w-- // Adds the module to the table based on its loading priority
+			StartedModules[LoadingPriority][Module.Name] = {Result, Category or nil} 
+		
+			LoadedCount += 1
+			if Debug then
+				print("[BlueBerry]: Loaded module: " .. ParentName .. "/" .. Module.Name .. " in: " .. string.format("%.4f", LoadTime) .. "s ✅")
+			end
+		else
+			warn("[BlueBerry]: Failed to load module: " .. ParentName .. "/" .. Module.Name .. " Error: " .. tostring(Result) .. " ❌")
+		end
+	end
 
 	--w-- // Main loading loop, loops through all children of the provided Parent instance,
 	--w-- // checks if they are ModuleScripts, and attempts to require them. It also tracks loading time for each module and prints debug information if enabled
-	for _, Module in ipairs(Parent:GetChildren()) do
+	for Name, Module in ipairs(Modules or {}) do
+		if typeof(Module) ~= "Instance" and typeof(Module) == "table" then 
+			for _, Child in ipairs(Module) do 
+				LoadModulePriority(Child)
+			end
+			continue
+		end
+
 		if not Module:IsA("ModuleScript") and not Module:IsA("ObjectValue") then continue end
 		if Module.Name == "BlueBerry" then continue end --w-- // Prevent loading itself if placed inside the same folder
 
@@ -49,24 +86,7 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 			continue
 		end
 
-		local StartTime = os.clock()
-		local Success, Result = pcall(require, Module:IsA("ObjectValue") and Module.Value or Module)
-		local LoadTime = os.clock() - StartTime
-
-		if Success then
-			local LoadingPriority = Result and typeof(Result) == "table" or 1
-			StartedModules[LoadingPriority] = StartedModules[LoadingPriority] or {}
-
-			--w-- // Adds the module to the table based on its loading priority
-			StartedModules[LoadingPriority][Module.Name] = {Result, Category or nil} 
-
-			LoadedCount += 1
-			if Debug then
-				print("[BlueBerry]: Loaded module: " ..Parent.Name.."/"..Module.Name .. " in: " .. string.format("%.4f", LoadTime) .. "s ✅")
-			end
-		else
-			warn("[BlueBerry]: Failed to load module: " ..Parent.Name.."/".. Module.Name .. " Error: " .. tostring(Result) .. " ❌")
-		end
+		LoadModulePriority(Module)
 	end
 
 	--w-- // Second step, initializes and starts modules if they have Init and Start functions respectively.
@@ -82,9 +102,9 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 						local Require = Module.Init and Module.Init or Module._init and Module._init or Module.init and Module.init or Module.initialize and Module.initialize
 						local Success, Result = pcall(Require, Module)
 						if not Success then
-							warn("[BlueBerry]: Failed to initialize module: " .. ModuleName .. " Error: " .. tostring(Result) .. " ❌")
+							warn("[BlueBerry]: Failed to initialize module: " .. Name .. " Error: " .. tostring(Result) .. " ❌")
 						elseif Debug then
-							print("[BlueBerry]: Initialized module: " .. ModuleName .. " ✅")
+							print("[BlueBerry]: Initialized module: " .. Name .. " ✅")
 						end
 					end
 				end
@@ -113,9 +133,9 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 						local Require = Module.Start and Module.Start or Module._start and Module._start or Module.start and Module.start
 						local Success, Result = pcall(Require, Module)
 						if not Success then
-							warn("[BlueBerry]: Failed to start module: " .. ModuleName .. " Error: " .. tostring(Result) .. " ❌")
+							warn("[BlueBerry]: Failed to start module: " .. Name .. " Error: " .. tostring(Result) .. " ❌")
 						elseif Debug then
-							print("[BlueBerry]: Started module: " .. ModuleName .. " ✅")
+							print("[BlueBerry]: Started module: " .. Name .. " ✅")
 						end
 					end
 				end
@@ -141,7 +161,7 @@ function BlueBerry:LoadModules(Parent : Instance, Category : string?, Debug : bo
 	end
 
 	--w-- // Loading complete, print summary
-	print("[BlueBerry]: Loaded " .. LoadedCount .. " modules from " .. Parent.Name .. " in: " .. Context .. " ✅")
+	print("[BlueBerry]: Loaded " .. LoadedCount .. " modules from " .. ParentName .. " in: " .. Context .. " ✅")
 
 	return StartedModules
 end
